@@ -1,0 +1,37 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\def\R{\mathbb{R}}
+\def\Xt{\tilde{X}}
+\def\Xh{\hat{X}}
+\def\T{\mathsf{T}}
+\def\W{\mathbf{W}}
+\def\V{\mathcal{V}}
+\def\M{\mathcal{M}}
+
+\title{Dynamic phase-transition in Large Vision Models}
+\author{Vishnu Mishra, S Ganga Prasath}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Model of inpainting task}
+Let us convert a $N \times N$ image into $M = N^2$ pixel and assume that we have $N^2$ tokens that are fed into an attention network. Each of the $i$-th token has a pixel intensity $X_i \in \R^M$. Now let us assume a random variable $\alpha_i \in \{ 0, 1 \}$ and it can take 0 with probability $\phi$ and 1 with $(1-\phi$) i.e. $P(\alpha_j = 0) = \phi$. Now, the masked image can be written as
+\[
+\Xt_i = \alpha_i X_i + (1-\alpha_i) \Phi,
+\]
+where $\Phi \in \R^M$ is a learned vector representing a hole. Form this, we can write the query, key and value vectors as, $Q_i = \W_Q \Xt_i, K_i = \W_K X_i, V_i = \W_V X_i$. We can define the score from this definition as $e_{ij} = Q_i^\T K_j/\sqrt{M}$ and the final weights,
+\[
+w_{ij} = \frac{\exp (e_{ij})}{\sum_{k \in \V} \exp{e_{ik}}}.
+\]
+From these weights, we can write the output vector at the masked locations, $i \in \M$ as,
+\[
+\Xh_i = \sum_j w_{ij} (\W_V \Xh_j).
+\]
+
+\end{document}
