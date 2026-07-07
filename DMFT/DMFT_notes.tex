@@ -1,0 +1,355 @@
+% RevTeX4-2, double column, preprint style
+\documentclass[aps,prb,onecolumn,showpacs,preprintnumbers,amsmath,amssymb]{revtex4-2}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{physics}
+\usepackage{hyperref}
+
+% Convenience macros
+\newcommand{\ZZ}[1]{\mathcal{Z}_{#1}}
+\newcommand{\fMF}{f^{\mathrm{MF}}}
+\newcommand{\hzero}{h^{(0)}}
+\newcommand{\Neff}{N_{\mathrm{eff}}}
+
+\begin{document}
+
+\title{DMFT Analysis of Masked Attention Mechanism}
+
+\author{Notes}
+\date{}
+
+\begin{abstract}
+These notes derive the Dynamical Mean-Field Theory (DMFT) analysis of a masked
+self-attention mechanism. Starting from a single-head attention setup with binary
+masks, we derive the mean-field fixed point, compute fluctuations around it, establish a self-consistency condition for the order parameter $Q$, and obtain the prediction error distribution $P(E)$.
+\end{abstract}
+
+\maketitle
+
+%------------------------------------------------------------------
+\section{Interpretation of Results}
+%------------------------------------------------------------------
+
+The critical mask density $\phi_c \approx 10^{-2}$ signals the transition from a
+power-law to a Gaussian regime, implying that the number of masked pixels is very
+small:
+\begin{equation}
+    N_m = \phi_c \times L^2 = 10^{-2} \times (256)^2 \approx 65 \text{ pixels}.
+\end{equation}
+
+The number of \emph{effective} pixels that a given pixel attends to is
+\begin{equation}
+    \Neff = (1-\phi)\,N\bar{A},
+\end{equation}
+where $\bar{A}$ is the average attention weight.
+
+The transition from power-law to Gaussian statistics occurs when $\Neff \sim O(1)$
+(i.e.\ when the Central Limit Theorem ceases to apply):
+\begin{equation}
+    (1-\phi)\,N\bar{A} \sim O(1)
+    \;\Longrightarrow\;
+    \phi = 1 - \frac{1}{N\bar{A}}.
+\end{equation}
+Under uniform attention ($\bar{A} \sim 1/N$) this gives $\phi_c \approx 0$, consistent
+with the result $\phi_c \approx 0$.
+
+%------------------------------------------------------------------
+\section{Setup: Masked Attention Mechanism}
+%------------------------------------------------------------------
+
+Consider pixel values $X_i \in \mathbb{R}^d$ and a binary mask
+$m_i \in \{0,1\}$ where $m_i = 1$ denotes a masked pixel. The mask density is
+$\phi = \frac{1}{N}\sum_i m_i$. We consider single-head attention with weight
+matrices $W_K = W_Q = W_V = \mathbf{I}$.
+
+The attention prediction is then
+\begin{equation}
+    \hat{X}_i = \sum_{j:\,m_j=0} e_{ij}\,X_j,
+    \qquad
+    e_{ij} = \frac{\exp\!\bigl(X_i \cdot X_j/\sqrt{d}\bigr)}
+                  {\displaystyle\sum_{k:\,m_k=0}\exp\!\bigl(X_i \cdot X_k/\sqrt{d}\bigr)}.
+\end{equation}
+
+We can write $\sum_{j:\,m_j=0}(\cdots) = \sum_{j=1}^{N}(1-m_j)(\cdots)$ since
+$(1-m_j)=0$ for masked pixels ($m_j=1$). After several iterations $X_i$ converges
+to a fixed point $h_i$ satisfying
+
+\begin{equation}\label{eq:FP}
+    h_i = \frac{\displaystyle\sum_{j\neq i}(1-m_j)\,e^{h_i X_j}\,X_j}
+               {\displaystyle\sum_{k\neq i}(1-m_k)\,e^{h_i X_k}}.
+    \tag{F.P.}
+\end{equation}
+
+%------------------------------------------------------------------
+\section{Mean and Fluctuations}
+%------------------------------------------------------------------
+
+We define the mean and fluctuations of the numerator $\mathcal{N}(h_i)$ and
+denominator $\mathcal{D}(h_i)$:
+
+\begin{align}
+    \mathcal{N}(h_i) &= \underbrace{\mathbb{E}_{X,m}\!\bigl[(1-m)\,e^{h_i X}\,X\bigr]}_{\text{mean}}
+                      + \underbrace{\sum_{j\neq i}(1-m_j)\,e^{h_i X_j}\,X_j - \mathbb{E}}_{\text{fluctuation}}, \\[4pt]
+    \mathcal{D}(h_i) &= \mathbb{E}_{X,m}\!\bigl[(1-m)\,e^{h_i X}\bigr]\cdot N
+                      + \sum_{k\neq i}\Bigl[(1-m_k)\,e^{h_i X_k} - \mathbb{E}\Bigr].
+\end{align}
+
+\subsection{Mean values}
+
+\begin{align}
+    \mathbb{E}\!\bigl[(1-m)\,e^{h_i X}\cdot X\bigr] &= (1-\phi)\,\mathbb{E}\!\bigl[e^{h_i X}\cdot X\bigr], \\
+    \mathbb{E}\!\bigl[(1-m)\,e^{h_i X}\bigr]         &= (1-\phi)\,\mathbb{E}\!\bigl[e^{h_i X}\bigr].
+\end{align}
+
+For $X \sim \mathcal{N}(0,\sigma^2)$ these are computed via the moment-generating
+function identity
+\begin{equation}
+    \mathbb{E}_X\!\bigl[e^{hx}\bigr]
+    = \int_{-\infty}^{\infty} e^{hx}\,e^{-x^2/2\sigma^2}\,dx
+    = e^{h^2\sigma^2/2}.
+\end{equation}
+
+Using the identity $\mathcal{Z}_n(h) \equiv \mathbb{E}[e^{hX}X^n] = \partial_h^n\,\mathbb{E}_X[e^{hX}]$,
+the mean values are simply
+\begin{equation}
+    \hzero_i = \frac{(1-\phi)\,\mathcal{Z}_1\!\bigl(\hzero_i\bigr)}
+                    {(1-\phi)\,\mathcal{Z}_0\!\bigl(\hzero_i\bigr)}
+             = \sigma^2\,\hzero_i,
+\end{equation}
+which gives the result
+\begin{equation}
+    \hzero_i = 0 \quad \text{for } \sigma^2 < 1.
+\end{equation}
+
+The mean-field function is defined as
+\begin{equation}
+    \fMF(h^{(0)}) = \frac{\mathcal{Z}_1(h^{(0)})}{\mathcal{Z}_0(h^{(0)})}.
+\end{equation}
+
+%------------------------------------------------------------------
+\section{Computing Fluctuations}
+%------------------------------------------------------------------
+
+Define the fluctuations in numerator and denominator:
+\begin{align}
+    \nu_j(h) &= (1-m_j)\,e^{hX_j}\,X_j - (1-\phi)\,\mathcal{Z}_1(h), \\
+    g_j(h)   &= (1-m_j)\,e^{hX_j}       - (1-\phi)\,\mathcal{Z}_0(h).
+\end{align}
+
+It is easy to see that $\mathbb{E}[\nu_j]=\mathbb{E}[g_j]=0$ and
+\begin{align}
+    \delta\mathcal{N}(h) &= \sum_{j\neq i}\nu_j(h) \sim O(\sqrt{N}), \\
+    \delta\mathcal{D}(h) &= \sum_{j\neq i}g_j(h)   \sim O(\sqrt{N}).
+\end{align}
+
+Expanding the fixed-point equation \eqref{eq:FP} around $\hzero$ and simplifying,
+we obtain
+\begin{equation}
+    \hzero + \delta h_i
+    = \fMF(\hzero)
+      + \frac{\delta\mathcal{N}}{N(1-\phi)\mathcal{Z}_0}
+      + \frac{\partial_h\mathcal{Z}_1}{\mathcal{Z}_0}\,\delta h_i
+      - \fMF\frac{\delta\mathcal{D}}{N(1-\phi)\mathcal{Z}_0}
+      + O\!\bigl((\delta h_i)^2\bigr).
+\end{equation}
+
+Solving for $\delta h_i$:
+\begin{equation}
+    \delta h_i\!\left[1 - \frac{\partial_h\mathcal{Z}_1}{\mathcal{Z}_0}
+                           + \fMF\frac{\partial_h\mathcal{Z}_0}{\mathcal{Z}_0}\right]
+    = \frac{\delta\mathcal{N} - \fMF\,\delta\mathcal{D}}{N(1-\phi)\mathcal{Z}_0}.
+\end{equation}
+
+Using $\mathcal{Z}_0 = \exp(h^2\sigma^2/2)$ and $\mathcal{Z}_1 = \sigma^2 h\exp(h^2\sigma^2/2)$, the cavity susceptibility is
+\begin{equation}
+    \chi = \frac{1}{1 - \dfrac{\partial_h\mathcal{Z}_1}{\mathcal{Z}_0}
+                  + \fMF\dfrac{\partial_h\mathcal{Z}_0}{\mathcal{Z}_0}}.
+\end{equation}
+Evaluating at $h^{(0)}=0$ gives $\partial_h\mathcal{Z}_1/\mathcal{Z}_0\big|_{h=0} = \sigma^2$
+and $\partial_h\mathcal{Z}_0/\mathcal{Z}_0\big|_{h=0} = 0$, so
+\begin{equation}
+    \chi = \frac{1}{1-\sigma^2}.
+\end{equation}
+
+Therefore:
+\begin{equation}
+    \delta h_i = \frac{\chi}{N(1-\phi)\mathcal{Z}_0}
+                 \sum_{j\neq i}(1-m_j)\,e^{h^{(0)}X_j}\bigl[X_j - \fMF(h_0)\bigr].
+\end{equation}
+
+%------------------------------------------------------------------
+\section{Variance of \texorpdfstring{$\delta h_i$}{delta h\_i}}
+%------------------------------------------------------------------
+
+\begin{equation}
+    \mathbb{E}\!\bigl[(\delta h_i)^2\bigr]
+    = \frac{\chi^2}{N^2(1-\phi)^2\mathcal{Z}_0^2}
+      \sum_{j\neq i}\mathbb{E}\!\left[(1-m_j)^2 e^{2h^{(0)}X_j}
+      \bigl(X_j - \fMF\bigr)^2\right].
+\end{equation}
+
+Using $(1-m_j)^2=(1-m_j)$ and expanding:
+\begin{align}
+    \mathbb{E}_{m,X}&\!\left[(1-m_j)\,e^{2h^{(0)}X}\bigl(X-\fMF\bigr)^2\right] \nonumber\\
+    &= (1-\phi)\,\mathbb{E}_X\!\left[e^{2h^{(0)}X}\bigl(X-\fMF\bigr)^2\right] \nonumber\\
+    &= (1-\phi)\Bigl[\mathcal{Z}_2(2h^{(0)}) - 2\fMF\mathcal{Z}_1(2h^{(0)}) + (\fMF)^2\mathcal{Z}_0(2h^{(0)})\Bigr].
+\end{align}
+
+Substituting $h^{(0)}=0$ gives $\mathcal{Z}_0(0)=1$, $\mathcal{Z}_1(0)=0$, $\mathcal{Z}_2(0)=\sigma^2$, so
+\begin{equation}
+    \mathbb{E}\!\bigl[(\delta h_i)^2\bigr]
+    = \frac{\chi^2}{N(1-\phi)}\Bigl[\sigma^2 - 0 + (\fMF)^2\Bigr]\bigg|_{\fMF=0}
+    = \frac{\chi^2\sigma^2}{N(1-\phi)}.
+\end{equation}
+
+Substituting $\chi = 1/(1-\sigma^2)$:
+\begin{equation}
+    \Delta \equiv \mathbb{E}\!\bigl[(\delta h_i)^2\bigr]
+           = \frac{\sigma^2}{N(1-\phi)(1-\sigma^2)^2}.
+\end{equation}
+
+%------------------------------------------------------------------
+\section{Self-Consistency Condition for Correlations}
+%------------------------------------------------------------------
+
+The disorder-averaged order parameter is defined as
+\begin{equation}
+    Q \equiv \overline{h_i^2}
+    = \overline{[h^{(0)} + \delta h_i]^2}
+    = (h^{(0)})^2 + \underbrace{2h^{(0)}\overline{\delta h_i}}_{\to 0} + \overline{\delta h_i^2}
+    = \Delta(Q).
+\end{equation}
+
+While $\Delta(\phi, \sigma)$ computed above is valid around the mean-field fixed
+point $h^{(0)}=0$, for an arbitrary fixed point the variance is
+\begin{equation}
+    \Delta = \frac{\chi^2}{N(1-\phi)^2\mathcal{Z}_0(h^{(0)})^2}
+             \cdot (1-\phi)\,\mathbb{E}_X\!\left[e^{2h^{(0)}X}\bigl(X-\fMF\bigr)^2\right].
+\end{equation}
+
+Defining $\mathbb{E}_X[o] \equiv \mathbb{E}_X\!\left[e^{2h^{(0)}X}(X-\fMF)^2\right]$, we compute
+\begin{equation}
+    \mathbb{E}_X[o]
+    = \mathcal{Z}_2(2h^{(0)}) - 2\fMF\mathcal{Z}_1(2h^{(0)}) + (\fMF)^2\mathcal{Z}_0(2h^{(0)}).
+\end{equation}
+
+For $X\sim\mathcal{N}(0,\sigma^2)$:
+\begin{align}
+    \mathcal{Z}_0(2h^{(0)}) &= e^{\sigma^2(2h^{(0)})^2/2} = e^{2\sigma^2(h^{(0)})^2}, \\
+    \mathcal{Z}_1(2h^{(0)}) &= \partial_h M\big|_{h=2h^{(0)}} = 2\sigma^2 h^{(0)}\,e^{2\sigma^2(h^{(0)})^2}, \\
+    \mathcal{Z}_2(2h^{(0)}) &= \partial_h^2 M\big|_{h=2h^{(0)}} = (\sigma^2 + 4\sigma^4(h^{(0)})^2)\,e^{2\sigma^2(h^{(0)})^2}.
+\end{align}
+
+With $\fMF = \sigma^2 h^{(0)}$:
+\begin{align}
+    \mathbb{E}_X[o]
+    &= e^{2\sigma^2(h^{(0)})^2}\Bigl[(\sigma^2+4\sigma^4(h^{(0)})^2)
+       - 2(\sigma^2 h^{(0)})(2\sigma^2 h^{(0)}) + (\sigma^2 h^{(0)})^2\Bigr] \nonumber\\
+    &= e^{2\sigma^2(h^{(0)})^2}\bigl[\sigma^2 + \sigma^4(h^{(0)})^2\bigr].
+\end{align}
+
+Thus
+\begin{equation}
+    \Delta = \frac{\chi^2\,e^{2\sigma^2(h^{(0)})^2}}{N(1-\phi)}
+                   \bigl[\sigma^2 + \sigma^4(h^{(0)})^2\bigr].
+\end{equation}
+
+Since $h_i$ is itself a fluctuating quantity, $h_i \sim \mathcal{N}(h^{(0)}, Q)$,
+the terms involving $(h^{(0)})^2$ require averaging over $h_i$:
+\begin{equation}
+    \mathbb{E}_{h_i}\!\left[e^{\sigma^2 h_i^2}\right]
+    = \int \frac{1}{\sqrt{2\pi Q}}\,e^{-h^2/2Q}\,e^{\sigma^2 h^2}\,dh
+    = \frac{1}{\sqrt{1-2\sigma^2 Q}},
+    \quad \tfrac{1}{2Q}-\sigma^2 > 0.
+\end{equation}
+
+Assuming $Q \ll 1$ (valid for large $N$):
+\begin{equation}
+    \frac{1}{\sqrt{1-2\sigma^2 Q}} \approx e^{\sigma^2 Q}.
+\end{equation}
+
+Similarly:
+\begin{equation}
+    \mathbb{E}_{h_i}\!\left[h_i^2\,e^{\sigma^2 h_i^2}\right]
+    = \frac{Q}{(1-2\sigma^2 Q)^{3/2}} \approx Q\,e^{\sigma^2 Q}.
+\end{equation}
+
+Using these results:
+\begin{equation}
+    \Delta(Q) = \frac{\chi^2\,e^{\sigma^2 Q}}{N(1-\phi)}\bigl(\sigma^2 + \sigma^4 Q\bigr).
+\end{equation}
+
+The actual $Q^*$ is obtained by solving the self-consistency condition
+\begin{equation}
+    Q = \Delta(Q).
+\end{equation}
+
+%------------------------------------------------------------------
+\section{Asymptotic Analysis of \texorpdfstring{$Q^*$}{Q*}}
+%------------------------------------------------------------------
+
+\paragraph{Small $Q$ regime ($\sigma^2 Q \ll 1$).}
+The expression simplifies to
+\begin{equation}
+    Q^* = \frac{\chi^2 \sigma^2}{N(1-\phi)}
+               = \frac{\sigma^2}{N(1-\phi)(1-\sigma^2)^2},
+\end{equation}
+consistent with $\delta h_i \sim \mathcal{N}(0,\Delta)$.
+
+\paragraph{Dense-mask regime ($\phi \to 1$).}
+Define $(1-\phi)=\epsilon$. The self-consistency equation $N\epsilon Q = \Delta(Q)$
+becomes
+\begin{equation}
+    N\epsilon Q = \frac{e^{\sigma^2 Q}}{(1-\sigma^2)^2}\bigl(\sigma^2 + \sigma^4 Q\bigr).
+\end{equation}
+When $\sigma^2 Q \ll 1$: $N\epsilon Q \approx \sigma^2/(1-\sigma^2)^2$, giving
+$Q \sim \sigma^2/[N\epsilon(1-\sigma^2)^2]$.
+
+When $N\epsilon \sim O(1)$: $N\epsilon Q \sim Q e^{\sigma^2 Q}\cdot\sigma^2[1+\sigma^2 Q]$,
+and as $Q \gg 1$, $N\epsilon Q \sim Qe^{\sigma^2 Q}$, yielding
+\begin{equation}
+    Q \sim \frac{1}{2\sigma^2}\log[N(1-\phi)].
+\end{equation}
+Note that $Q \to -\infty$ as $\phi\to 1$ is unphysical since $Q>0$; $Q$ grows
+logarithmically but does not diverge when $\phi\to 1$.
+
+%------------------------------------------------------------------
+\section{Prediction Error Distribution \texorpdfstring{$P(E)$}{P(E)}}
+%------------------------------------------------------------------
+
+The prediction error is defined as
+\begin{equation}
+    E = (X_i - h_i)^2,
+    \qquad X_i \sim \mathcal{N}(0,\sigma^2),\quad h_i \sim \mathcal{N}(0,Q^*).
+\end{equation}
+
+Since $X_i$ and $h_i$ are independent (cavity method removes direct correlations),
+$X_i - h_i \sim \mathcal{N}(0,\sigma^2+Q^*)$ and
+\begin{equation}
+    P(E) = \frac{1}{\sqrt{2\pi(\sigma^2+Q^*)E}}
+                  \exp\!\left[-\frac{E}{2(\sigma^2+Q^*)}\right].
+\end{equation}
+
+The mean prediction error is
+\begin{equation}
+    \mathbb{E}[E] = \sigma^2 + Q^*
+    \approx \sigma^2\!\left[1 + \frac{\phi}{N(1-\sigma^2)^2}\right],
+    \qquad \langle E\rangle - \sigma^2 \sim \phi.
+\end{equation}
+
+\paragraph{Regime $Q^* \ll \sigma^2$.}
+\begin{equation}
+    P(E) \approx \frac{1}{\sqrt{2\pi\sigma^2 E}}\,e^{-E/2\sigma^2}
+    \propto E^{-1/2} \quad [\text{i.e.}\ O(1)\text{ tokens}].
+\end{equation}
+
+\paragraph{Regime $Q^* \gg \sigma^2$.}
+\begin{equation}
+    P(E) \approx \frac{1}{\sqrt{2\pi Q^* E}}\,e^{-E/2Q^*}.
+\end{equation}
+
+\end{document}
